@@ -12,9 +12,9 @@ class mainWindow(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         container = tk.Frame(self)
 
-        container.grid(row=0)
+        container.grid(row=1)
 
-        container.grid_rowconfigure(0, weight=100)
+        container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
@@ -25,7 +25,7 @@ class mainWindow(tk.Tk):
 
             self.frames[F] = frame
 
-            frame.grid(row=110, column=220, sticky='nsew')
+            frame.grid(row=0, column=0, sticky='nsew')
 
         #frame.grid(row=0,column=0,sticky='nsew')
         #frame.grid(row=110,column=110,sticky='nsew')
@@ -42,20 +42,20 @@ class StartPage(tk.Frame): #Frame inicial
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text='Login')
-        label.grid(row=0, column=1)
+        label = tk.Label(self, text='Bem vindo ao $sistema$')
+        label.place(relx=0.32, rely=0.09, height=21, width=244)
 
         #Labels
-        nameL = tk.Label(self, text='Usuario: ')
-        nameL.grid(row=2,sticky='E')
-        pwordL = tk.Label(self, text='Senha: ')
-        pwordL.grid(row=3, sticky='E')
+        #nameL = tk.Label(self, text='Usuario: ')
+        #nameL.grid(row= 2, column= 7,padx=5, pady=5, sticky='e')
+        #pwordL = tk.Label(self, text='Senha: ')
+        #pwordL.grid(row= 6, column=3, padx=5, pady=5, sticky='e')
 
         #Entrys
         nameE = tk.Entry(self)
-        nameE.grid(row=2, column=1, sticky='E')
+        #nameE.grid(row=3, column=0,pady=100)
         pwordE = tk.Entry(self, show='*')
-        pwordE.grid(row=3, column=1,  sticky='E')
+        #pwordE.grid(padx=0, pady=0)
 
 
         def verify():  # conecta ao db
@@ -69,7 +69,8 @@ class StartPage(tk.Frame): #Frame inicial
             exist = c.fetchone()
 
             if exist is not None:
-                messagebox.showinfo("Sucesso", "Usuário logado com sucesso!", command=lambda:controller.show_frame(Logado))
+                messagebox.showinfo("Sucesso", "Usuário logado com sucesso!")
+                controller.show_frame(Logado)
 
             else:
                 messagebox.showerror("Erro", "Usuário ou senha incorretos!")
@@ -78,8 +79,10 @@ class StartPage(tk.Frame): #Frame inicial
             return
 
         #Botoes
-        button1 = tk.Button(self, text='Login', command=verify).grid(row=4, sticky='E')
-        button2 = tk.Button(self, text='Cadastrar', command=lambda: controller.show_frame(Cadastro)).grid(row=4, columnspan=5, sticky='e')
+        #button1 = tk.Button(self, text='Login', command=verify)
+        #button1.grid(row=30, column=1, sticky='E')
+        #button1.configure(takefocus="")
+        #button2 = tk.Button(self, text='Cadastrar', command=lambda: controller.show_frame(Cadastro)).grid(row=30, column=5, sticky='e')
 
 class Cadastro(tk.Frame):
     def __init__(self, parent, controller):
@@ -131,4 +134,5 @@ class Logado(tk.Frame):
 
 
 app = mainWindow()
+app.geometry("400x200")
 app.mainloop()
