@@ -1,44 +1,143 @@
 import tkinter as tk
-creds = 'tempfile.temp'
+from tkinter import messagebox
+from sqlite3 import Error
+import sqlite3
 
-class MainWindow(tk.Tk):
+LARGE_FONT= ('Verdana',12)
+
+class mainWindow(tk.Tk):
 
     def __init__(self, *args, **kwargs):
-        self.roots = tk.Tk()
 
-    def Cadastrar(self):
-        self.roots.title('Signup')
-        intruction = Label(roots, text='Novo login\n')
-        intruction.grid(row=0, column=1, sticky=W)
-        self.roots.minsize(width=300, height=350)
-        self.roots.maxsize(width=300, height=350)
+        tk.Tk.__init__(self, *args, **kwargs)
+        container = tk.Frame(self)
 
-        nameL = Label(self.roots, text='Novo usuario: ')
-        pwordL = Label(self.roots, text='Nova senha: ')
-        nameL.grid(row=1,column=0,sticky=E)
-        pwordL.grid(row=2,column=0,sticky=E)
+        container.grid(row=0)
 
-        nameE = Entry(self.roots)
-        pwordE = Entry(self.roots, show='*')
-        nameE.grid(row=1, column=1, stick=E)
-        pwordE.grid(row=2, column=1, sticky=E)
+        container.grid_rowconfigure(300, weight=500)
+        container.grid_columnconfigure(0, weight=500)
 
-        signupBut = Button(self.roots, text='Cadastrar', command=FSSignup)
-        signupBut.grid(columnspan=2, sticky=W)
-        self.roots.mainloop()
+        self.frames = {}
 
-    def Login(self):
-        pass
+        for F in  (StartPage, Cadastro, Logado):
 
-    def FSSignup(self):
-        with open(creds, 'w') as f:
-            f.write(nameE.get())
-            f.write('\n')
-            f.write(pwordE.get())
-            f.close()
-        self.roots.destroy()
-        Login()
+            frame = F(container,self)
+
+            self.frames[F] = frame
+
+            frame.grid(row=110, column=220, sticky='nsew')
 
 
-#Cadastrar()
+        #frame.grid(row=0,column=0,sticky='nsew')
+        #frame.grid(row=110,column=110,sticky='nsew')
 
+        self.show_frame(StartPage)
+
+    def show_frame(self, cont):
+        frame = self.frames[cont]
+        frame.tkraise()
+
+class StartPage(tk.Frame): #Frame inicial
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text='Login')
+        label.grid(row=1, column=10)
+
+        #Labels
+        nameL = tk.Label(self, text='Usuario: ')
+        nameL.grid(row=5,sticky='E')
+        pwordL = tk.Label(self, text='Senha: ')
+        pwordL.grid(row=6, sticky='E')
+
+        #Entrys
+        nameE = tk.Entry(self)
+        nameE.grid(row=5,column=3, sticky='E')
+        pwordE = tk.Entry(self, show='*')
+        pwordE.grid(row=6, column=3,  sticky='E')
+
+
+        def verify():  # conecta ao db
+            conn = sqlite3.connect('logins.db')
+            c = conn.cursor()
+            login = nameE.get()
+            senha = pwordE.get()
+            print(login,senha)
+
+            c.execute("""select user,pword from login where user='{}' and pword='{}'""".format(login, senha))
+            exist = c.fetchone()
+
+            if exist is not None:
+                messagebox.showinfo("Sucesso", "Usuário logado com sucesso!")
+                controller.show_frame(Logado)
+
+            else:
+                messagebox.showerror("Erro", "Usuário ou senha incorretos!")
+            #print(login, senha)
+            conn.close()
+            return
+
+        #Botoes
+        button1 = tk.Button(self, text='Entrar', command=verify).grid(row=8, sticky='E')
+        button2 = tk.Button(self, text='Cadastrar', command=lambda: controller.show_frame(Cadastro)).grid(row=8, columnspan=5, sticky='e')
+
+class Cadastro(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text='Novo cadastro')
+        label.grid(row=0, column=1)
+
+        #Labels
+        nameL = tk.Label(self, text='Novo usuario: ')
+        nameL.grid(row=2,sticky='E')
+        pwordL = tk.Label(self, text='Nova senha: ')
+        pwordL.grid(row=3, sticky='E')
+
+        #Entrys
+        nameE = tk.Entry(self)
+        nameE.grid(row=2, column=1, sticky='E')
+        pwordE = tk.Entry(self, show='*')
+        pwordE.grid(row=3, column=1,  sticky='E')
+
+        def cadastro():  # conecta ao db
+            conn = sqlite3.connect('logins.db')
+            c = conn.cursor()
+            login = nameE.get()
+            print(len(login))
+            senha = pwordE.get()
+
+            if len(login) > 5 and len(senha) > 5: #verificação de senha e login
+                try:
+                        c.execute("""
+                        INSERT INTO login (user, pword) 
+                        VALUES(?,?);""", (login,senha))
+                        messagebox.showinfo("Sucesso", "Usuário cadastrado!")
+                        conn.commit()
+                except Error as e:
+                    print(e)
+                    messagebox.showerror("Erro", "Usuário já cadastrado!")
+            elif len(login) != 0 and len(senha) !=0:
+                messagebox.showerror("Erro", "Necessário ao menos 5 caracteres no login e senha!")
+            else:
+                messagebox.showerror("Erro", "Espaço em branco")
+            print(login, senha)
+            conn.close()
+            return
+
+        button1 = tk.Button(self, text='Cadastrar', command=cadastro).grid(row=4, sticky='E')
+        button2 = tk.Button(self, text='Voltar', command=lambda: controller.show_frame(StartPage)).grid(row=4, column=2, sticky='E')
+
+class Logado(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text='Sistema')
+        label.grid(row=0, column=1)
+
+
+
+app = mainWindow()
+#app.size(width= 400)
+app.minsize(width=500, height=500)
+app.maxsize(width=500, height=500)
+app.bind('Return', )
+app.mainloop()
